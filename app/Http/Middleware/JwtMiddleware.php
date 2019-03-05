@@ -20,8 +20,9 @@ public $attributes;
     {
         if (!$request->hasHeader('Authorization')){
             return response()->json([
-                'data'=>'Authorization Header not found', 
-                'status'=>401], 401);
+                'result'=>[
+                    'message'=>'Authorization Header not found',
+                    'status'=>401]], 401);
         }
         $token = $request->bearerToken();
         $token = $request->get('token');
@@ -29,25 +30,32 @@ public $attributes;
         $token = substr($token, 7);
         if ($request->header('Authorization') == null || $token == null){
             return  reponse()->json([
-                'data'=>'No token provided', 
-                'status'=>401], 401);
+                'result'=>[
+                    'message'=>'No token provided', 
+                    'status'=>401]], 401);
         }
             if (!$token) {
                 return response()->json([
-                'error' => 'Token not provided.'
-                ], 401);
+                'result'=>[
+                    'message'=>'No token provided', 
+                    'status'=>401]], 401);
             }
           
             try {
                 $credentials = JWT::decode($token, env('JWT_SECRET'), ['HS512']);
                 }catch (ExpiredException $e) {
                     return response()->json([
-                    'error' => 'Provided token is expired.'
-                    ], 400);
+                        'result'=>[
+                            'message'=>'Provided token is expired.', 
+                            'status'=>401]], 401);
+                  
                 } catch (\Exception $e) {
+                    
                     return response()->json([
-                    'error' => 'Error while decoding'
-                    ], 400);
+                        'result'=>[
+                            'message'=>'Error while decoding', 
+                            'status'=>401]], 401);
+                
                 }
 
                 $member = Member::find($credentials->sub);

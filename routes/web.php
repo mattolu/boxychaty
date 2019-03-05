@@ -18,6 +18,7 @@ $router->get('/', function () use ($router) {
 });
 $router->post('/register', 'MemberController@register');
 $router->post('/login', 'MemberController@authenticate');
+
 //$router->post('/annotate', 'ProcessorController@annotateUrls');
 // protected routes.
 $router->group(
@@ -25,4 +26,7 @@ $router->group(
     function($router)  {
         //User profile
         $router->post('/annotate', 'ProcessorController@annotateUrls');
+        $router->get('/members', 'MemberController@getMemberAll');
+        $router->get('/annotation', 'ProcessorController@getAnnotation');
+        
     });

@@ -40,7 +40,7 @@ class MemberController extends Controller
                     'iss' => 'lumen-jwt', // Issuer of the token
                     'sub' => $member->id, // Subject of the token
                     'iat' => time(), // Time when JWT was issued.
-                    'exp' => time() + 3600*3600 // Expiration time
+                    'exp' => time() + 1 * 24 * 60 * 60 //3600*3600 // Expiration time of 1 day
                 ];
         return JWT::encode($payload, env('JWT_SECRET'), 'HS512');
     }
@@ -66,13 +66,13 @@ class MemberController extends Controller
     $validator = Validator::make($request->all(), [
         'firstname' => 'required',
         'lastname' => 'required',
-        'username' => 'required',
+        'username' => 'required|unique:members',
         'email' => 'required|email|unique:members',
         'password' => 'required'
     ]);
         if ($validator->fails()) {
             return response()->json([
-                'error'=>[
+                'result'=>[
                     'success' => false,
                     'status' =>400,
                     'message' => $validator->errors()->all()
@@ -95,17 +95,17 @@ class MemberController extends Controller
                                     'success'=> true,
                                     'status'=>200,
                                     'message'=> 'Registration successful',
-                                    'member_data'=>$member,
-                                    //'token' => $this->jwt($user)
+                                    'member_data'=>$member
                                 ]]);    
         
                 
                 }catch(\Illuminate\Database\QueryException $ex){
                 return json_encode([
-                    'status'=>500,
-                    'registered'=>false,
-                    'message'=>$ex->getMessage()
-                    ]);  
+                    'result'=>[
+                        'status'=>500,
+                        'registered'=>false,
+                        'message'=>$ex->getMessage()
+                        ]]);  
             }
         }
     
@@ -118,7 +118,7 @@ class MemberController extends Controller
         ]);
         if ($validator->fails()) {
             return response()->json([
-                'error'=>[
+                'result'=>[
                     'success' => false,
                     'status' =>400,
                     'message' => $validator->errors()->all()
@@ -127,8 +127,8 @@ class MemberController extends Controller
             $member = Member::where('username', $this->request->input('username'))->first();
             if (!$member) {
                 return response()->json([
-                    'error' =>[
-                        'message' => 'Username does not exist.',
+                    'result' =>[
+                        'message' => 'Username does not exist. Kindly REGISTER now',
                         'status' => 400
                         ]]);
             }
@@ -142,10 +142,34 @@ class MemberController extends Controller
                  ]]);
                 }
                 return response()->json([
-                'error'=>[
-                    'message' => 'username or password is wrong.',
+                'result'=>[
+                    'message' => 'Oops, you just typed a wrong password',
                     'status' => 400
             ]]);
     }
-  
+    public function getMemberAll(){
+      try{ 
+      $member = Member::orderBy('id', 'desc')->get();
+           if ( count($member) !=0  ){
+           return json_encode([
+           'result'=>[
+                   'status'=>200,
+                   'message'=>'only members',
+                   'members'=>$member
+               ]]);
+           } else{
+               return json_encode([
+                   'result'=>[
+                       'status'=> 401,
+                       'message'=> 'No Registered members'
+                   ]]);
+           }
+       } catch ( Exception $e){
+               return json_encode([
+                   'result'=>[
+                       'status'=> 401,
+                       'message'=> $e
+                   ]]);
+           }
+    }
 }

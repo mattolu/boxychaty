@@ -27,7 +27,7 @@ class ProcessorController extends Controller
             public function annotateUrls(Request $request){
                 //Setting the variables for the time and array context
                
-                $processedList = array();
+                
 
             //validating the urls entered
                 $validator = Validator::make($request->all(), [
@@ -35,7 +35,7 @@ class ProcessorController extends Controller
                 ]);
                 if ($validator->fails()){
                     return response()->json([
-                        'error'=>[
+                        'result'=>[
                             'success' => false,
                             'status' =>400,
                             'message' => $validator->errors()->all()
@@ -45,7 +45,7 @@ class ProcessorController extends Controller
                     $urlsString = $request->urls;
                     $urlArray = explode(',',$urlsString);
 
-                    
+                   
                     ///Looping through the array of the urls input
                     foreach($urlArray as $url){
                         //$status = false;
@@ -55,7 +55,7 @@ class ProcessorController extends Controller
                     
                         try{
                             $current_timestamp = Carbon::now()->timestamp;
-                           // $currentDateTime = date('Y-m-d H:i:s');
+                            $currentDateTime = date('Y-m-d H:i:s');
                             $url = trim($url);
                             //The API URL for getting the information 
                           
@@ -79,21 +79,29 @@ class ProcessorController extends Controller
                                     $annotation->filelocation = $storagePath;
                                     $annotation->member_id = app('request')->get('authUser')->id;
                                     $annotation->save();
-                                    
+
+                                    $processedList[] = array(
+                                        'url' => $url,
+                                        'status' => $status,
+                                        'filename' => $preparedFileName,
+                                        'date' => $currentDateTime,
+                                        'member' => app('request')->get('authUser')->id
+                                    );
                                             
                                 
                                 }  catch(\Illuminate\Database\QueryException $ex){
                                         return json_encode([
-                                            'status'=>500,
-                                            'posted'=>false,
-                                            'message'=>$ex->getMessage()
-                                            ]);  
+                                            'result'=>[
+                                                'status'=>500,
+                                                'posted'=>false,
+                                                'message'=>$ex->getMessage()
+                                                ]]);  
                                     }
                                     }
                                 
                                 else  return json_encode([
-                                    'error' => [
-                                        'annotation'=>'The response is empty. Check your internet',
+                                    'result' => [
+                                        'message'=>'The response is empty. Check your internet',
                                         'status' => 403
                                     ],
                                  ]
@@ -114,10 +122,11 @@ class ProcessorController extends Controller
                                 }   
                                 catch(\Illuminate\Database\QueryException $ex){
                                     return json_encode([
-                                        'status'=>500,
-                                        'posted'=>false,
-                                        'message'=>$ex->getMessage()
-                                        ]);  
+                                        'result'=>[
+                                            'status'=>500,
+                                            'posted'=>false,
+                                            'message'=>$ex->getMessage()
+                                            ]]);  
                                 }
                             }
                         
@@ -126,11 +135,24 @@ class ProcessorController extends Controller
                             // like the connection failed or some other network error
                         
                             return json_encode([
-                                    'error' => 'The response is empty. Check your internet',
+                                'result'=>[
+                                    'message' => 'The response is empty. Check your internet',
                                     'annotation'=>'file(s) not created',
                                     'status' => 403
                                 
-                             ]
+                             ]]
+                                );
+                        }catch (\GuzzleHttp\Exception\RequestException $e) {
+                            //Catch the guzzle connection errors over here.These errors are something 
+                            // like the connection failed or some other network error
+                        
+                            return json_encode([
+                                'result'=>[
+                                    'message' => 'Bad request!!! Why? Check your typed URLs',
+                                    'annotation'=>'file(s) not created',
+                                    'status' => 403
+                                
+                             ]]
                                 );
                         }
 
@@ -138,16 +160,42 @@ class ProcessorController extends Controller
                    
                    // if($annotation->save()){
                         return $reponse = response()->json([
-                                 'annotation' => [
+                                 'result' => [
                                      'status' => 200,
                                      'success'=>true,
+                                     'data' => $processedList,
                                      'message' => 'Annotation files created and details saved successfully'    
                                                  ]
                                                          ]);
                                  //}
         }
     }
-    
+
+    public function getAnnotation(){
+        try{ 
+            $annotaion = Annotation::orderBy('id', 'desc')->get();
+                 if ( count($annotaion) !=0  ){
+                 return json_encode([
+                 'result'=>[
+                         'status'=>200,
+                         
+                         'annotations'=>$annotaion
+                     ]]);
+                 } else{
+                     return json_encode([
+                         'result'=>[
+                             'status'=> 401,
+                             'message'=> 'No annotation done yet'
+                         ]]);
+                 }
+             } catch ( Exception $e){
+                     return json_encode([
+                         'result'=>[
+                             'status'=> 401,
+                             'message'=> 'Data not found'
+                         ]]);
+                 }
+          }
 }
 
 

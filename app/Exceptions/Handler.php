@@ -49,35 +49,35 @@ class Handler extends ExceptionHandler
     {
         if($e instanceof \Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException){
           return response()->json([
-            'error'=>[
+            'result'=>[
             'status'=>401,
             'message'=>'Unauthorized' ]
           ]);
         } 
         if($e instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException){
            return response()->json([
-            'error'=>[
+            'result'=>[
             'status'=>401,
             'message'=>'HTTP method not allowed' ]
           ]);
          }
          if ($e instanceof NotFoundHttpException){
             return response()->json([
-                'error'=>[
+                'result'=>[
                 'status'=>401,
                 'message'=>'Sorry, Resource not found', ]
               ]);
         }
         if ($e instanceof FatalErrorException){
           return response()->json([
-              'error'=>[
+              'result'=>[
               'status'=>401,
               'message'=>'Sorry, slow loading... Try again', ]
             ]);
       }
         if ($e instanceof ErrorException){
             return response()->json([
-                'error'=>[
+                'result'=>[
                 'status'=>401,
                 'message'=>'Sorry, Resource not found', ]
               ]);
